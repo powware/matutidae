@@ -1,0 +1,27 @@
+function add(arg1, arg2)
+    return arg1 + arg2
+end
+
+function five()
+    local sum = 0
+
+    while (sum < 5) do
+        sum = sum + 1
+    end
+end
+
+function test(arg)
+    if arg < 2 then
+        return 0
+    elseif arg == 2
+        return 2
+    elseif arg < 4
+        return 4
+    else
+        return 5
+    end
+end
+
+function main()
+    return add(test(1) + test(2) + test(3) + test(6), five())
+end
