@@ -1,1 +1,13 @@
-local a = 1 local b=2 print(a+b) print(a + b)
+function add(arg1, arg2)
+    local sum = arg1+arg2
+    return sum
+end
+
+function sub(arg1, arg2)
+    local sub = arg1-arg2
+    return sub
+end
+
+
+
+local a = 1 local b=2 print(add(a,b)) print(a + b)

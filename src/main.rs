@@ -1,6 +1,9 @@
+use clap::{arg, Command};
+use tokenizer::tokenize;
+
+mod parser;
 mod tokenizer;
 
-use clap::{arg, Command};
 fn main() {
     let matches = Command::new("natutidae")
                 .author("powware, powwared@gmail.com")
@@ -13,4 +16,9 @@ fn main() {
     let input = matches.get_one::<String>("FILE").unwrap();
     let content = std::fs::read_to_string(input).expect("Couldn't open file.");
     let tokens = tokenizer::tokenize(&content);
+
+    let mut i: usize = 0;
+
+    let tokens = tokenize(input);
+    Parser::parse(tokens);
 }

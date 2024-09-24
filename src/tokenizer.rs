@@ -2,7 +2,7 @@ use std::collections::hash_map::Entry::Occupied;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 
 pub enum Keyword {
     Local,
@@ -13,10 +13,11 @@ pub enum Keyword {
     While,
     Do,
     End,
+    Return,
     Nil,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Operation {
     Assignment,
     Addition,
@@ -32,9 +33,10 @@ pub enum Operation {
     And,
     Or,
     Not,
+    Comma,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Token {
     Keyword(Keyword),
     Identifier(String),
@@ -73,20 +75,91 @@ impl Trie {
     }
 }
 
+fn delimit(
+    input: &str,
+    from: &mut usize,
+    i: usize,
+    current: Option<&TrieNode>,
+    tokens: &mut Vec<Token>,
+) {
+    let mut new_token: Option<Token> = None;
+
+    if let Some(token) = current.and_then(|node| node.token.as_ref()) {
+        new_token = Some(token.clone());
+    } else if (i > *from) {
+        let sub = String::from(&input[*from..i]);
+        if let Ok(integer) = sub.parse::<i32>() {
+            new_token = Some(Token::Integer(integer));
+        } else {
+            new_token = Some(Token::Identifier(sub));
+        }
+    }
+
+    if let Some(token) = new_token {
+        println!("token {token:?}");
+        tokens.push(token);
+    }
+
+    *from = i + 1;
+}
+
 pub fn tokenize(input: &str) -> Vec<Token> {
     let mut trie = Trie::new();
     trie.insert("local", Token::Keyword(Keyword::Local));
+    trie.insert("function", Token::Keyword(Keyword::Function));
+    trie.insert("if", Token::Keyword(Keyword::If));
+    trie.insert("else", Token::Keyword(Keyword::Else));
+    trie.insert("elseif", Token::Keyword(Keyword::ElseIf));
+    trie.insert("while", Token::Keyword(Keyword::While));
+    trie.insert("do", Token::Keyword(Keyword::Do));
+    trie.insert("return", Token::Keyword(Keyword::Return));
+    trie.insert("nil", Token::Keyword(Keyword::Nil));
     trie.insert("=", Token::Operation(Operation::Assignment));
+    trie.insert("+", Token::Operation(Operation::Addition));
+    trie.insert("-", Token::Operation(Operation::Subtraction));
+    trie.insert("*", Token::Operation(Operation::Multiplication));
+    trie.insert("/", Token::Operation(Operation::Division));
+    trie.insert(",", Token::Operation(Operation::Comma));
     trie.insert("(", Token::ParenthesisOpen);
     trie.insert(")", Token::ParenthesisClose);
-    trie.insert(" ", Token::Whitespace);
+    let root = &trie.root;
 
     let mut tokens: Vec<Token> = Vec::new();
-    let mut start: Option<usize> = None;
-    let i: usize = 0;
-    while i < input.len() {
-        let c = input.chars().nth(i).unwrap();
-        trie.root.children.get(&c);
+    let mut from: usize = 0;
+    let mut current: Option<&TrieNode> = None;
+    for (i, c) in input.chars().enumerate() {
+        let mut delimiter: Option<Token> = None;
+        if c.is_whitespace() {
+            delimiter = Some(Token::Whitespace);
+        } else {
+            if let Some(token) = root.children.get(&c).and_then(|node| node.token.as_ref()) {
+                delimiter = Some(token.clone());
+            } else {
+                match current {
+                    Some(_) => (),
+                    None => current = Some(root),
+                }
+            }
+        }
+
+        // either a whitespace or a single character token will indicate the end of an identifier/keyword/integer/string literal
+        if let Some(token) = delimiter {
+            delimit(input, &mut from, i, current, &mut tokens);
+            current = None;
+            match token {
+                Token::Whitespace => (),
+                _ => {
+                    println!("token {token:?}");
+                    tokens.push(token);
+                }
+            }
+        } else {
+            // walk down the trie if possible
+            current = match current {
+                Some(current) => current.children.get(&c),
+                None => None,
+            }
+        }
     }
 
     tokens
