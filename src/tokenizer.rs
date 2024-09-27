@@ -93,7 +93,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     let mut from: usize = 0;
     let mut current: Option<&TrieNode> = None;
     let mut i = 0;
-    while i < input.len() {
+    'outer: while i < input.len() {
         let c = input.chars().nth(i).unwrap();
         let mut delimiter: Option<Token> = None;
         if c.is_whitespace() {
@@ -103,6 +103,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 if let Some(symbol) = node.token.as_ref() {
                     // check if c is a symbol (child of the trie root with a token)
 
+                    // handle string literals
                     match symbol {
                         Token::SingleQuote | Token::DoubleQuote => {
                             let mut escaped = false;
@@ -115,12 +116,13 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                                     .and_then(|node| node.token.as_ref())
                                 {
                                     if !escaped && ssymbol == symbol {
-                                        delimiter = Some(Token::StringLiteral(String::from(
+                                        tokens.push(Token::StringLiteral(String::from(
                                             &input[(i + 1)..(si)],
                                         )));
-                                        from = si;
-                                        i = si;
-                                        break;
+                                        i = si + 1;
+                                        from = i;
+                                        current = None;
+                                        continue 'outer;
                                     }
 
                                     match ssymbol {
@@ -129,6 +131,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                                     }
                                 }
                             }
+                            panic!("string literal does not close");
                         }
                         _ => delimiter = Some(symbol.clone()),
                     }
