@@ -1,9 +1,9 @@
-function add(arg1, arg2)
+function _function(arg1, arg2)
     local sum = arg1+arg2
     return sum
 end
 
-function sub(arg1, arg2)
+function localsub(arg1, arg2)
     local sub = arg1-arg2
     return sub
 end

@@ -19,11 +19,11 @@ pub enum Keyword {
 
 #[derive(Debug, Clone)]
 pub enum Operation {
-    Assignment,
-    Addition,
-    Subtraction,
-    Multiplication,
-    Division,
+    EqualSign,
+    Plus,
+    Minus,
+    Asterisk,
+    ForwardSlash,
     LessThan,
     LessThanEqual,
     Equal,
@@ -75,54 +75,25 @@ impl Trie {
     }
 }
 
-fn delimit(
-    input: &str,
-    from: &mut usize,
-    i: usize,
-    current: Option<&TrieNode>,
-    tokens: &mut Vec<Token>,
-) {
-    let mut new_token: Option<Token> = None;
-
-    if let Some(token) = current.and_then(|node| node.token.as_ref()) {
-        new_token = Some(token.clone());
-    } else if (i > *from) {
-        let sub = String::from(&input[*from..i]);
-        if let Ok(integer) = sub.parse::<i32>() {
-            new_token = Some(Token::Integer(integer));
-        } else {
-            new_token = Some(Token::Identifier(sub));
-        }
-    }
-
-    if let Some(token) = new_token {
-        println!("token {token:?}");
-        tokens.push(token);
-    }
-
-    *from = i + 1;
-}
-
 pub fn tokenize(input: &str) -> Vec<Token> {
-    let mut trie = Trie::new();
-    trie.insert("local", Token::Keyword(Keyword::Local));
-    trie.insert("function", Token::Keyword(Keyword::Function));
-    trie.insert("if", Token::Keyword(Keyword::If));
-    trie.insert("else", Token::Keyword(Keyword::Else));
-    trie.insert("elseif", Token::Keyword(Keyword::ElseIf));
-    trie.insert("while", Token::Keyword(Keyword::While));
-    trie.insert("do", Token::Keyword(Keyword::Do));
-    trie.insert("return", Token::Keyword(Keyword::Return));
-    trie.insert("nil", Token::Keyword(Keyword::Nil));
-    trie.insert("=", Token::Operation(Operation::Assignment));
-    trie.insert("+", Token::Operation(Operation::Addition));
-    trie.insert("-", Token::Operation(Operation::Subtraction));
-    trie.insert("*", Token::Operation(Operation::Multiplication));
-    trie.insert("/", Token::Operation(Operation::Division));
-    trie.insert(",", Token::Operation(Operation::Comma));
-    trie.insert("(", Token::ParenthesisOpen);
-    trie.insert(")", Token::ParenthesisClose);
-    let root = &trie.root;
+    let mut keywords = Trie::new();
+    keywords.insert("local", Token::Keyword(Keyword::Local));
+    keywords.insert("function", Token::Keyword(Keyword::Function));
+    keywords.insert("if", Token::Keyword(Keyword::If));
+    keywords.insert("else", Token::Keyword(Keyword::Else));
+    keywords.insert("elseif", Token::Keyword(Keyword::ElseIf));
+    keywords.insert("while", Token::Keyword(Keyword::While));
+    keywords.insert("do", Token::Keyword(Keyword::Do));
+    keywords.insert("return", Token::Keyword(Keyword::Return));
+    keywords.insert("nil", Token::Keyword(Keyword::Nil));
+    keywords.insert("=", Token::Operation(Operation::EqualSign));
+    keywords.insert("+", Token::Operation(Operation::Plus));
+    keywords.insert("-", Token::Operation(Operation::Minus));
+    keywords.insert("*", Token::Operation(Operation::Asterisk));
+    keywords.insert("/", Token::Operation(Operation::ForwardSlash));
+    keywords.insert(",", Token::Operation(Operation::Comma));
+    keywords.insert("(", Token::ParenthesisOpen);
+    keywords.insert(")", Token::ParenthesisClose);
 
     let mut tokens: Vec<Token> = Vec::new();
     let mut from: usize = 0;
@@ -132,33 +103,42 @@ pub fn tokenize(input: &str) -> Vec<Token> {
         if c.is_whitespace() {
             delimiter = Some(Token::Whitespace);
         } else {
-            if let Some(token) = root.children.get(&c).and_then(|node| node.token.as_ref()) {
-                delimiter = Some(token.clone());
-            } else {
-                match current {
-                    Some(_) => (),
-                    None => current = Some(root),
+            if let Some(node) = keywords.root.children.get(&c) {
+                if let Some(symbol) = node.token.as_ref() {
+                    // check if c is a symbol (child of the trie root with a token)
+                    delimiter = Some(symbol.clone());
+                } else if i == from {
+                    // otherwise if the previous was a delimiter or its the first beginning of the input, we are starting a keyword
+                    current = Some(node);
                 }
             }
         }
 
         // either a whitespace or a single character token will indicate the end of an identifier/keyword/integer/string literal
-        if let Some(token) = delimiter {
-            delimit(input, &mut from, i, current, &mut tokens);
-            current = None;
-            match token {
-                Token::Whitespace => (),
-                _ => {
-                    println!("token {token:?}");
-                    tokens.push(token);
+        if let Some(symbol) = delimiter {
+            if let Some(keyword) = current.and_then(|node| node.token.as_ref()) {
+                tokens.push(keyword.clone());
+            } else if i > from {
+                let sub = String::from(&input[from..i]);
+                if let Ok(integer) = sub.parse::<i32>() {
+                    tokens.push(Token::Integer(integer));
+                } else {
+                    tokens.push(Token::Identifier(sub));
                 }
             }
-        } else {
-            // walk down the trie if possible
-            current = match current {
-                Some(current) => current.children.get(&c),
-                None => None,
+
+            from = i + 1;
+            current = None;
+
+            match symbol {
+                Token::Whitespace => (),
+                _ => {
+                    tokens.push(symbol);
+                }
             }
+        } else if i > from {
+            // walk down the trie if possible
+            current = current.and_then(|node| node.children.get(&c));
         }
     }
 

@@ -15,10 +15,11 @@ fn main() {
 
     let input = matches.get_one::<String>("FILE").unwrap();
     let content = std::fs::read_to_string(input).expect("Couldn't open file.");
-    let tokens = tokenizer::tokenize(&content);
+    let tokens = tokenize(&content);
 
-    let mut i: usize = 0;
+    for token in tokens {
+        println!("token {token:?}");
+    }
 
-    let tokens = tokenize(input);
-    Parser::parse(tokens);
+    // Parser::parse(tokens);
 }
