@@ -1,10 +1,7 @@
-use std::collections::hash_map::Entry::Occupied;
-use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
-
-pub enum Keyword {
+#[derive(Debug, Clone, PartialEq)]
+pub enum Token {
     Local,
     Function,
     If,
@@ -15,15 +12,15 @@ pub enum Keyword {
     End,
     Return,
     Nil,
-}
-
-#[derive(Debug, Clone)]
-pub enum Operation {
+    Identifier(String),
+    Integer(i32),
+    StringLiteral(String),
     EqualSign,
     Plus,
     Minus,
     Asterisk,
     ForwardSlash,
+    BackSlash,
     LessThan,
     LessThanEqual,
     Equal,
@@ -34,17 +31,10 @@ pub enum Operation {
     Or,
     Not,
     Comma,
-}
-
-#[derive(Debug, Clone)]
-pub enum Token {
-    Keyword(Keyword),
-    Identifier(String),
-    Integer(i32),
-    StringLiteral(String),
-    Operation(Operation),
     ParenthesisOpen,
     ParenthesisClose,
+    SingleQuote,
+    DoubleQuote,
     Whitespace,
 }
 
@@ -77,28 +67,34 @@ impl Trie {
 
 pub fn tokenize(input: &str) -> Vec<Token> {
     let mut keywords = Trie::new();
-    keywords.insert("local", Token::Keyword(Keyword::Local));
-    keywords.insert("function", Token::Keyword(Keyword::Function));
-    keywords.insert("if", Token::Keyword(Keyword::If));
-    keywords.insert("else", Token::Keyword(Keyword::Else));
-    keywords.insert("elseif", Token::Keyword(Keyword::ElseIf));
-    keywords.insert("while", Token::Keyword(Keyword::While));
-    keywords.insert("do", Token::Keyword(Keyword::Do));
-    keywords.insert("return", Token::Keyword(Keyword::Return));
-    keywords.insert("nil", Token::Keyword(Keyword::Nil));
-    keywords.insert("=", Token::Operation(Operation::EqualSign));
-    keywords.insert("+", Token::Operation(Operation::Plus));
-    keywords.insert("-", Token::Operation(Operation::Minus));
-    keywords.insert("*", Token::Operation(Operation::Asterisk));
-    keywords.insert("/", Token::Operation(Operation::ForwardSlash));
-    keywords.insert(",", Token::Operation(Operation::Comma));
+    keywords.insert("local", Token::Local);
+    keywords.insert("function", Token::Function);
+    keywords.insert("if", Token::If);
+    keywords.insert("else", Token::Else);
+    keywords.insert("elseif", Token::ElseIf);
+    keywords.insert("while", Token::While);
+    keywords.insert("do", Token::Do);
+    keywords.insert("end", Token::End);
+    keywords.insert("return", Token::Return);
+    keywords.insert("nil", Token::Nil);
+    keywords.insert("=", Token::EqualSign);
+    keywords.insert("+", Token::Plus);
+    keywords.insert("-", Token::Minus);
+    keywords.insert("*", Token::Asterisk);
+    keywords.insert("/", Token::ForwardSlash);
+    keywords.insert("\\", Token::BackSlash);
+    keywords.insert(",", Token::Comma);
     keywords.insert("(", Token::ParenthesisOpen);
     keywords.insert(")", Token::ParenthesisClose);
+    keywords.insert("'", Token::SingleQuote);
+    keywords.insert("\"", Token::DoubleQuote);
 
     let mut tokens: Vec<Token> = Vec::new();
     let mut from: usize = 0;
     let mut current: Option<&TrieNode> = None;
-    for (i, c) in input.chars().enumerate() {
+    let mut i = 0;
+    while i < input.len() {
+        let c = input.chars().nth(i).unwrap();
         let mut delimiter: Option<Token> = None;
         if c.is_whitespace() {
             delimiter = Some(Token::Whitespace);
@@ -106,7 +102,36 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             if let Some(node) = keywords.root.children.get(&c) {
                 if let Some(symbol) = node.token.as_ref() {
                     // check if c is a symbol (child of the trie root with a token)
-                    delimiter = Some(symbol.clone());
+
+                    match symbol {
+                        Token::SingleQuote | Token::DoubleQuote => {
+                            let mut escaped = false;
+                            for si in (i + 1)..input.len() {
+                                let sc = input.chars().nth(si).unwrap();
+                                if let Some(ssymbol) = keywords
+                                    .root
+                                    .children
+                                    .get(&sc)
+                                    .and_then(|node| node.token.as_ref())
+                                {
+                                    if !escaped && ssymbol == symbol {
+                                        delimiter = Some(Token::StringLiteral(String::from(
+                                            &input[(i + 1)..(si)],
+                                        )));
+                                        from = si;
+                                        i = si;
+                                        break;
+                                    }
+
+                                    match ssymbol {
+                                        Token::BackSlash => escaped = true,
+                                        _ => escaped = false,
+                                    }
+                                }
+                            }
+                        }
+                        _ => delimiter = Some(symbol.clone()),
+                    }
                 } else if i == from {
                     // otherwise if the previous was a delimiter or its the first beginning of the input, we are starting a keyword
                     current = Some(node);
@@ -140,6 +165,8 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             // walk down the trie if possible
             current = current.and_then(|node| node.children.get(&c));
         }
+
+        i = i + 1;
     }
 
     tokens

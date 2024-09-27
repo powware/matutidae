@@ -1,5 +1,5 @@
 use std::fmt;
-use tokenizer::{Keyword, Token};
+use tokenizer::Token;
 
 use crate::tokenizer;
 
@@ -57,12 +57,7 @@ impl Parser {
     pub fn parse(&mut self) -> ASTNode {
         while self.pos < self.tokens.len() {
             match self.tokens.get(self.pos).unwrap() {
-                Token::Keyword(keyword) => match keyword {
-                    Keyword::Function => {
-                        self.parse_function();
-                    }
-                    _ => (),
-                },
+                Token::Function => self.parse_function(),
                 _ => (),
             }
 

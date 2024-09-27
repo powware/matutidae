@@ -5,9 +5,11 @@ end
 
 function localsub(arg1, arg2)
     local sub = arg1-arg2
+    local string = "simple"
+    print(simple)
     return sub
 end
 
 
 
-local a = 1 local b=2 print(add(a,b)) print(a + b)
+local a = 1 local b=2 print(add(a,b)) print(a + b) print("oh oh, this is 'differrent'\"") print('really "different"')
