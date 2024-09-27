@@ -148,8 +148,12 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 tokens.push(keyword.clone());
             } else if i > from {
                 let sub = String::from(&input[from..i]);
-                if let Ok(integer) = sub.parse::<i32>() {
-                    tokens.push(Token::Integer(integer));
+                if sub.chars().nth(0).unwrap().is_digit(10) {
+                    if let Ok(integer) = sub.parse::<i32>() {
+                        tokens.push(Token::Integer(integer));
+                    } else {
+                        panic!("invalid integer");
+                    }
                 } else {
                     tokens.push(Token::Identifier(sub));
                 }

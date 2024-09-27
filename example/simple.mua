@@ -6,6 +6,8 @@ end
 function localsub(arg1, arg2)
     local sub = arg1-arg2
     local string = "simple"
+    local integer = 12
+
     print(simple)
     return sub
 end
