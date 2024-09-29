@@ -3,7 +3,7 @@ use tokenizer::Token;
 
 use crate::tokenizer;
 
-enum ASTNode {
+pub enum ASTNode {
     VariableDefiniton,
     FunctionDefinition,
 }
@@ -19,7 +19,7 @@ impl fmt::Display for ParserError {
     }
 }
 
-struct Parser {
+pub struct Parser {
     tokens: Vec<Token>,
     pos: usize,
 }
@@ -54,7 +54,19 @@ impl Parser {
         // }
     }
 
+    pub fn peek(&mut self) -> Option<&Token> {
+        return self.tokens.get(self.pos);
+    }
+
+    pub fn pop(&mut self) {
+        self.pos = self.pos + 1;
+    }
+
     pub fn parse(&mut self) -> ASTNode {
+        // for token in tokens {
+        //     println!("token {token:?}");
+        // }
+
         while self.pos < self.tokens.len() {
             match self.tokens.get(self.pos).unwrap() {
                 Token::Function => self.parse_function(),
@@ -66,9 +78,4 @@ impl Parser {
 
         ASTNode::FunctionDefinition
     }
-}
-
-pub fn parse(tokens: Vec<Token>) -> ASTNode {
-    let mut parser = Parser::new(tokens);
-    parser.parse()
 }

@@ -18,7 +18,7 @@ pub enum Token {
     EqualSign,
     Plus,
     Minus,
-    Asterisk,
+    Star,
     ForwardSlash,
     BackSlash,
     LessThan,
@@ -80,7 +80,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     keywords.insert("=", Token::EqualSign);
     keywords.insert("+", Token::Plus);
     keywords.insert("-", Token::Minus);
-    keywords.insert("*", Token::Asterisk);
+    keywords.insert("*", Token::Star);
     keywords.insert("/", Token::ForwardSlash);
     keywords.insert("\\", Token::BackSlash);
     keywords.insert(",", Token::Comma);
