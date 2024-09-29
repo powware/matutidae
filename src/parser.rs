@@ -67,14 +67,14 @@ impl Parser {
         //     println!("token {token:?}");
         // }
 
-        while self.pos < self.tokens.len() {
-            match self.tokens.get(self.pos).unwrap() {
-                Token::Function => self.parse_function(),
-                _ => (),
-            }
+        // while self.pos < self.tokens.len() {
+        //     match self.tokens.get(self.pos).unwrap() {
+        //         Token::Function => self.parse_function(),
+        //         _ => (),
+        //     }
 
-            self.pos = self.pos + 1;
-        }
+        //     self.pos = self.pos + 1;
+        // }
 
         ASTNode::FunctionDefinition
     }

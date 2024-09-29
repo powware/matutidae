@@ -1,7 +1,8 @@
 [package]
-name = "rust-compiler"
+name = "compiler"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = "4.5.18"
+clap = { version = "4.5.18", features = ["derive"] }
+loop_unwrap = "0.2.0"

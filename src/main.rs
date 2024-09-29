@@ -1,28 +1,36 @@
-use clap::{arg, Command};
-use parser::Parser;
-use tokenizer::tokenize;
+use clap::Parser as ClapParser;
 
-mod parser;
-mod preprocessor;
-mod tokenizer;
+use compiler::parser::Parser;
+use compiler::preprocessor::preprocess;
+use compiler::tokenizer::tokenize;
+
+#[derive(ClapParser, Debug)]
+#[command(name = "rust-compiler")]
+#[command(version, about, long_about = None)]
+pub struct Args {
+    #[arg(required = true, num_args = 1..)]
+    files: Vec<String>,
+
+    #[arg(short, long)]
+    output: Option<String>,
+
+    #[arg(short, long)]
+    includes: Vec<String>,
+
+    #[arg(short, long)]
+    debug: bool,
+}
 
 fn main() {
-    let matches = Command::new("rust-compiler")
-        .author("powware, powwared@gmail.com")
-        .version("0.1.0")
-        .about("Compiler")
-        .args([
-            arg!(<FILE> "file to interpret"),
-            arg!(-I <DIR> "Include Directory"),
-        ])
-        .after_help("redo")
-        .get_matches();
+    let args = Args::parse();
 
-    let file = matches.get_one::<String>("FILE").unwrap();
-    let input = std::fs::read_to_string(file).expect("Couldn't open file.");
-    // input = preprocess(input);
-    let tokens = tokenize(&input);
+    for file in &args.files {
+        let mut input = std::fs::read_to_string(file).expect("Couldn't open file.");
+        input = preprocess(input, args.debug, &args.includes);
+        println!("{input}");
+        let tokens = tokenize(input);
 
-    let mut parser = Parser::new(tokens);
-    parser.parse();
+        let mut parser = Parser::new(tokens);
+        parser.parse();
+    }
 }

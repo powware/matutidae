@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'matutidae'",
+            "name": "Debug executable 'compiler'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=matutidae",
-                    "--package=matutidae"
+                    "--bin=compiler",
+                    "--package=compiler"
                 ],
                 "filter": {
-                    "name": "matutidae",
+                    "name": "compiler",
                     "kind": "bin"
                 }
             },
@@ -27,16 +27,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'matutidae'",
+            "name": "Debug unit tests in executable 'compiler'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=matutidae",
-                    "--package=matutidae"
+                    "--bin=compiler",
+                    "--package=compiler"
                 ],
                 "filter": {
-                    "name": "matutidae",
+                    "name": "compiler",
                     "kind": "bin"
                 }
             },
