@@ -1,0 +1,1 @@
+#define area(h, w) h *w

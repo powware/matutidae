@@ -7,6 +7,25 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug unit tests in library 'compiler'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=compiler"
+                ],
+                "filter": {
+                    "name": "compiler",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug executable 'compiler'",
             "cargo": {
                 "args": [
@@ -20,7 +39,7 @@
                 }
             },
             "args": [
-                "example/simple.mua"
+                "examples/source.t"
             ],
             "cwd": "${workspaceFolder}"
         },
@@ -38,6 +57,25 @@
                 "filter": {
                     "name": "compiler",
                     "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'tokenizer'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=tokenizer",
+                    "--package=compiler"
+                ],
+                "filter": {
+                    "name": "tokenizer",
+                    "kind": "test"
                 }
             },
             "args": [],

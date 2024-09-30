@@ -1,8 +1,8 @@
 use std::fmt;
 use tokenizer::Token;
 
-use crate::tokenizer;
 
+use crate::tokenizer;
 pub enum ASTNode {
     VariableDefiniton,
     FunctionDefinition,

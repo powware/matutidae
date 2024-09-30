@@ -1,1 +1,1 @@
-#define area(h, w) h *w
+#include "include/header2.h"

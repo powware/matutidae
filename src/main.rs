@@ -1,8 +1,12 @@
+use std::collections::LinkedList;
+use std::path::{Path, PathBuf};
+
 use clap::Parser as ClapParser;
 
 use compiler::parser::Parser;
 use compiler::preprocessor::preprocess;
 use compiler::tokenizer::tokenize;
+use compiler::util::read_lines;
 
 #[derive(ClapParser, Debug)]
 #[command(name = "rust-compiler")]
@@ -24,13 +28,24 @@ pub struct Args {
 fn main() {
     let args = Args::parse();
 
-    for file in &args.files {
-        let mut input = std::fs::read_to_string(file).expect("Couldn't open file.");
-        input = preprocess(input, args.debug, &args.includes);
-        println!("{input}");
-        let tokens = tokenize(input);
+    let mut includes: LinkedList<String> = LinkedList::new();
+    for include in args.includes {
+        includes.push_back(include);
+    }
 
-        let mut parser = Parser::new(tokens);
-        parser.parse();
+    for file in &args.files {
+        let lines = read_lines(file).expect("Unable to open file.");
+        includes.push_front(String::from(
+            Path::new(file).parent().unwrap().to_str().unwrap(),
+        ));
+        let lines = preprocess(lines, &mut includes, args.debug);
+        includes.pop_front();
+        for line in lines {
+            println!("{line}");
+        }
+        // let tokens = tokenize(lines);
+
+        // let mut parser = Parser::new(tokens);
+        // parser.parse();
     }
 }
