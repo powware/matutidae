@@ -39,7 +39,7 @@
                 }
             },
             "args": [
-                "examples/source.t"
+                "examples/source.c"
             ],
             "cwd": "${workspaceFolder}"
         },

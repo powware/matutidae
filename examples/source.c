@@ -10,4 +10,5 @@
 #define width 5
 #define height 6 // #include "header.h"
 
-area = #area(height, width) #;
+int area = area(height, width);
+int area2 = complexer(height, width);
