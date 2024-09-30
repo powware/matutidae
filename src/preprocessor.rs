@@ -24,28 +24,40 @@ fn include(file: &str, includes: &LinkedList<String>) -> (String, Vec<String>) {
     panic!("unable to include file {file:?}.");
 }
 
-fn strip_comments(lines: &mut Vec<String>, debug: bool) {
-    let mut multiline: bool = false;
-    for line in lines {
-        if multiline {
-            // if {
-
-            // }
-            // else {
-            //     line.clear();
-            // }
-            line.clear();
+fn strip_comments(line: String, mut multiline: bool) -> (String, bool) {
+    if multiline {
+        if let Some((_, code_after)) = regex_captures!(r".*?\*/(.*)", &line) {
+            return strip_comments(String::from(code_after), false);
         } else {
-            if let Some((_, code, is_comment, multiline_start, multiline_end)) =
-                regex_captures!(r"(.*?)\s*(//|(/\*)).*(\*/)?", line)
-            {
-                multiline = true;
-            }
+            return (String::new(), true);
         }
     }
+
+    if let Some((
+        _,
+        code_before,
+        is_comment,
+        single_line,
+        multi_line,
+        code_after_multiline,
+        multi_line_open,
+    )) = regex_captures!(r"^(.*?)\s*((//.*)|(/\*.*\*/(.*))|(/\*.*))$", &line)
+    {
+        if !single_line.is_empty() {
+            return (String::from(code_before), false);
+        }
+        if !multi_line.is_empty() {
+            return strip_comments(String::from(code_before) + code_after_multiline, false);
+        }
+        if !multi_line_open.is_empty() {
+            return (String::from(code_before), true);
+        }
+    }
+
+    (line, false)
 }
 
-fn preprocess_includes(
+fn include_and_strip_comments(
     lines: Vec<String>,
     includes: &mut LinkedList<String>,
     debug: bool,
@@ -57,40 +69,24 @@ fn preprocess_includes(
 
     let mut output: Vec<String> = Vec::new();
 
-    let mut multiline_comment: bool = false;
+    let mut multiline: bool = false;
 
-    for line in lines {
+    for mut line in lines {
         if line.is_empty() {
             output.push(line);
             continue;
         }
 
-        if multiline_comment {
-            if let Some((_, multiline_end, code_after)) = regex_captures!(r".*?(\*/)(.*)", &line) {
-                output.push(String::from(code_after));
-                multiline_comment = false;
-            }
-        }
-
-        if let Some((_, code_before, comment_start, multiline_start, multiline_end, code_after)) =
-            regex_captures!(r"(.*?)\s*(//|(/\*)).*(\*/(.?))?", &line)
-        {
-            if !comment_start.is_empty() {
-                output.push(String::from(code_before) + code_after);
-            }
-            if !multiline_start.is_empty() && multiline_end.is_empty() {
-                multiline_comment = true;
-            }
-        }
+        (line, multiline) = strip_comments(line, multiline);
 
         // TODO change the capture for include file names
-        if let Some((_, file)) = regex_captures!(r###"^#include\s+"(.+)"[ \t]*$"###, &line) {
+        if let Some((_, file)) = regex_captures!(r###"\s*#\s*include\s+"(.+)"\s*"###, &line) {
             println!("including {file:?}.");
             let (directory, included_lines) = include(file, &includes);
             includes.push_front(directory);
-            let preprocessed_lines =
-                preprocess_includes(included_lines, includes, debug, depth + 1);
-            for preprocessed_line in preprocessed_lines {
+            let included_and_stripped_lines =
+                include_and_strip_comments(included_lines, includes, debug, depth + 1);
+            for preprocessed_line in included_and_stripped_lines {
                 output.push(preprocessed_line);
             }
             includes.pop_front();
@@ -107,7 +103,7 @@ pub fn preprocess(
     includes: &mut LinkedList<String>,
     debug: bool,
 ) -> Vec<String> {
-    let output = preprocess_includes(lines, includes, debug, 0);
+    let output = include_and_strip_comments(lines, includes, debug, 0);
 
     // for line in lines {
     //     if line.is_empty() {

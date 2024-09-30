@@ -40,8 +40,9 @@ fn main() {
         ));
         let lines = preprocess(lines, &mut includes, args.debug);
         includes.pop_front();
-        for line in lines {
-            println!("{line}");
+        for (i, line) in lines.iter().enumerate() {
+            let line_number = i + 1;
+            println!("{line_number}\t{line}");
         }
         // let tokens = tokenize(lines);
 
